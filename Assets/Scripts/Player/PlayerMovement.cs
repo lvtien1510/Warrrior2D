@@ -17,12 +17,17 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;
     private BoxCollider2D boxCollider;
 
+    [SerializeField] private ParticleSystem footstep;
+    private ParticleSystem.EmissionModule footEmission;
+    
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         boxCollider = GetComponent<BoxCollider2D>();
         jumpCounter = extraJumps;
+        footEmission = footstep.emission;
     }
 
     // Update được gọi mỗi khung hình
@@ -33,28 +38,39 @@ public class PlayerMovement : MonoBehaviour
         // Di chuyển nhân vật
         rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
 
-        animator.SetBool("run", horizontalInput != 0);
-        bool isFalling = rb.velocity.y <= 0.1f && !IsGrounded(); 
-        animator.SetBool("jumpdown", isFalling);
+        animator.SetFloat("xVelocity", horizontalInput);
+        animator.SetFloat("yVelocity", rb.velocity.y);
+        animator.SetBool("isGrounded", IsGrounded());
+
+        
 
         // Xử lý nhảy
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            animator.SetTrigger("jumpup");
             if (IsGrounded())
             {
                 rb.velocity = new Vector2(rb.velocity.x, jump);
                 jumpCounter = extraJumps; // Reset jumpCounter khi chạm đất
-                
             }
             else if (jumpCounter > 0)
             {
                 rb.velocity = new Vector2(rb.velocity.x, jump);
                 jumpCounter--; // Giảm jumpCounter khi thực hiện nhảy đôi
+                
             }
             else return;
             
         }
+        //Hiệu ứng di chuyển
+        if (horizontalInput !=0 && IsGrounded())
+        {
+            footEmission.rateOverTime = 35f;
+        }
+        else
+        {
+            footEmission.rateOverTime = 0f;
+        }
+        
 
         // Xoay nhân vật khi di chuyển
         Flip();
